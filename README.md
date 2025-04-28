@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-# ProjetWeb
-ProjetWeb 
-=======
 # Banque Rupt - Banking Application
 
 A full-stack banking application with Next.js frontend and Express.js backend with PostgreSQL database.
@@ -30,5 +26,4 @@ git clone https://github.com/Zxcchinii/ProjetWeb.git
 cd ProjetWeb
 
 # Run the setup script
-npm run setup
->>>>>>> 239ee70 (First Final Version)
+node setup.js
