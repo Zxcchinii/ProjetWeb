@@ -20,7 +20,7 @@ if (!fs.existsSync(path.join(__dirname, 'package.json'))) {
       "build": "cd frontend && npm run build",
       "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
       "start:backend": "cd backend && npm start",
-      "start:frontend": "cd frontend && npm start"
+      "start-frontend": "cd frontend && npm start"
     },
     "dependencies": {
       "concurrently": "^8.2.0",
@@ -36,11 +36,19 @@ if (!fs.existsSync(path.join(__dirname, 'package.json'))) {
 }
 
 // Install root dependencies
-console.log('Installing dependencies...');
+console.log('📦 Installing root dependencies...');
 execSync('npm install', { stdio: 'inherit' });
 
-// Now run the actual setup script
-console.log('Running main setup script...');
-execSync('node setup.js', { stdio: 'inherit' });
+// Install backend dependencies + nodemon
+console.log('📦 Installing backend dependencies...');
+execSync('cd backend && npm install', { stdio: 'inherit' });
+
+// Ensure nodemon is available for backend dev
+console.log('🛠 Installing nodemon in backend as devDependency...');
+execSync('cd backend && npm install nodemon --save-dev', { stdio: 'inherit' });
+
+// Install frontend dependencies
+console.log('📦 Installing frontend dependencies...');
+execSync('cd frontend && npm install', { stdio: 'inherit' });
 
 console.log('✅ Setup completed!');
