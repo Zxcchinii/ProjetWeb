@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+:root {
+  /* Dark theme by default */
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --card-bg: #1a1a1a;
+  --border-color: #333333;
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --secondary-bg: #1f2937;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --background: #ffffff;
+    --foreground: #171717;
+    --card-bg: #ffffff;
+    --border-color: #e5e7eb;
+    --secondary-bg: #f3f4f6;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Add at the end */
+/* Dark theme styles for form elements */
+.dark input,
+.dark textarea,
+.dark select {
+  background-color: #1f2937 !important;
+  color: #e5e7eb !important;
+  border-color: #374151 !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #6b7280 !important;
+}
+
+.dark select option {
+  background-color: #1f2937 !important;
+  color: #e5e7eb !important;
+}
+
+/* Fix for any remaining light backgrounds */
+.dark .bg-white {
+  background-color: #1f2937 !important;
+}
+.dark .text-gray-700,
+.dark .text-gray-800,
+.dark .text-gray-900 {
+  color: #e5e7eb !important;
+}
