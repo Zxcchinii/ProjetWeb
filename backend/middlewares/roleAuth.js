@@ -3,14 +3,12 @@ const User = require('../models/Accounts/User');
 exports.requireRole = (roles) => {
   return async (req, res, next) => {
     try {
-      // User ID was set by the authenticate middleware
-      const user = await User.findByPk(req.user_id);
+      const user = await User.findByPk(req.userId); // Ensure this uses req.userId not req.user_id
       
       if (!user || !roles.includes(user.role)) {
         return res.status(403).json({ error: 'Accès non autorisé' });
       }
       
-      // Add full user object to request for convenience
       req.user = user;
       next();
     } catch (error) {

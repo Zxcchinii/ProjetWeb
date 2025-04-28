@@ -1,4 +1,4 @@
-const sequelize = require('./backend/config/db');
+const sequelize = require('./config/db');
 
 async function testConnection() {
   try {
