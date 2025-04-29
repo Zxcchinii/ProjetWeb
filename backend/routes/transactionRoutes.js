@@ -6,6 +6,7 @@ const transactionController = require('../controllers/transactionControllers');
 // Get user transactions
 router.get('/', authenticate, transactionController.getUserTransactions);
 
-// Other transaction routes...
+// Add this new route for creating transactions
+router.post('/', authenticate, transactionController.createTransaction);
 
 module.exports = router;

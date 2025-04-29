@@ -11,8 +11,8 @@ export default function TransferForm() {
   const [success, setSuccess] = useState(null);
   
   const [formData, setFormData] = useState({
-    from_account_id: '',
-    to_account_id: '',
+    account_number_from: '',
+    account_number_to: '',
     amount: '',
     description: ''
   });
@@ -58,8 +58,8 @@ export default function TransferForm() {
       
       setSuccess('Virement effectué avec succès');
       setFormData({
-        from_account_id: '',
-        to_account_id: '',
+        account_number_from: '',
+        account_number_to: '',
         amount: '',
         description: ''
       });
@@ -93,31 +93,33 @@ export default function TransferForm() {
         <div className="mb-4">
           <label className="block text-gray-300 mb-2">Compte source</label>
           <select
-            name="from_account_id"
-            value={formData.from_account_id}
+            name="account_number_from"
+            value={formData.account_number_from}
             onChange={handleChange}
             className="w-full p-2 border border-gray-700 bg-gray-800 text-gray-200 rounded"
             required
           >
-            <option value="" className="bg-gray-800">Sélectionnez un compte</option>
+            <option value="">Sélectionnez un compte</option>
             {accounts.map(account => (
-              <option key={account.id} value={account.id} className="bg-gray-800">
-                {account.type} - {account.account_number} ({account.balance}€)
+              <option key={account.id} value={account.account_number}>
+                {account.account_number} ({account.type}) - {parseFloat(account.balance).toFixed(2)} €
               </option>
             ))}
           </select>
         </div>
         
         <div className="mb-4">
-          <label className="block text-gray-300 mb-2">Compte destinataire</label>
+          <label className="block text-gray-300 mb-2">Numéro de compte destinataire (IBAN)</label>
           <input
             type="text"
-            name="to_account_id"
-            value={formData.to_account_id}
+            name="account_number_to"
+            value={formData.account_number_to}
             onChange={handleChange}
+            placeholder="FR9440327777764766"
             className="w-full p-2 border border-gray-700 bg-gray-800 text-gray-200 rounded placeholder-gray-500"
-            placeholder="ID du compte destinataire"
             required
+            pattern="^[A-Z]{2}[0-9]{2}[A-Z0-9]{1,30}$"
+            title="Format IBAN valide (ex: FR9440327777764766)"
           />
         </div>
         
@@ -128,8 +130,7 @@ export default function TransferForm() {
             name="amount"
             value={formData.amount}
             onChange={handleChange}
-            className="w-full p-2 border border-gray-700 bg-gray-800 text-gray-200 rounded placeholder-gray-500"
-            placeholder="0.00"
+            className="w-full p-2 border border-gray-700 bg-gray-800 text-gray-200 rounded"
             min="0.01"
             step="0.01"
             required

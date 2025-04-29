@@ -5,19 +5,20 @@ const helmet = require('helmet');
 const cors = require('cors');
 const sequelize = require('./config/db');
 const accountRoutes = require('./routes/accountRoutes');
-const adminRoutes = require('./routes/adminRoutes');
 const transactionRoutes = require('./routes/transactionRoutes');
 const authRoutes = require('./routes/authRoutes');
 // Add this to your server.js or index.js
 const cardRoutes = require('./routes/cardRoutes');
 const employeeRoutes = require('./routes/employeeRoutes');
+// Add this line with your other route registrations
+const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
 
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  origin: 'http://localhost:3000',
   credentials: true
 }));
 app.use(express.json());
@@ -29,6 +30,7 @@ app.use('/api/accounts', accountRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api', cardRoutes);
 app.use('/api/employee', employeeRoutes);
+// Add this line to register admin routes
 app.use('/api/admin', adminRoutes);
 
 // Error handling middleware
