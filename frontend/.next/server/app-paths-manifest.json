@@ -1,11 +1,13 @@
 {
-  "/login/page": "app/login/page.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js",
   "/admin/dashboard/page": "app/admin/dashboard/page.js",
   "/admin/accounts/page": "app/admin/accounts/page.js",
   "/admin/users/page": "app/admin/users/page.js",
+  "/page": "app/page.js",
+  "/login/page": "app/login/page.js",
   "/dashboard/page": "app/dashboard/page.js",
-  "/dashboard/accounts/page": "app/dashboard/accounts/page.js",
   "/dashboard/transfer/page": "app/dashboard/transfer/page.js",
+  "/dashboard/cards/page": "app/dashboard/cards/page.js",
   "/dashboard/transactions/page": "app/dashboard/transactions/page.js",
-  "/dashboard/cards/page": "app/dashboard/cards/page.js"
+  "/dashboard/accounts/page": "app/dashboard/accounts/page.js"
 }

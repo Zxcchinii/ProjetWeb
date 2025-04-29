@@ -27,47 +27,47 @@ export default function TransactionsList() {
   }, []);
   
   if (loading) {
-    return <div className="text-center p-4">Chargement des transactions...</div>;
+    return <div className="text-center p-4 text-gray-300">Chargement des transactions...</div>;
   }
   
   if (error) {
-    return <div className="text-center text-red-500 p-4">{error}</div>;
+    return <div className="text-center text-red-400 p-4">{error}</div>;
   }
   
   if (transactions.length === 0) {
-    return <div className="text-center p-4">Aucune transaction trouvée</div>;
+    return <div className="text-center p-4 text-gray-300">Aucune transaction trouvée</div>;
   }
   
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full bg-white">
-        <thead className="bg-gray-100">
+    <div className="overflow-x-auto rounded-lg shadow">
+      <table className="min-w-full bg-gray-800 border border-gray-700">
+        <thead className="bg-gray-900">
           <tr>
-            <th className="py-3 px-4 text-left">Date</th>
-            <th className="py-3 px-4 text-left">Description</th>
-            <th className="py-3 px-4 text-left">Compte source</th>
-            <th className="py-3 px-4 text-left">Compte destinataire</th>
-            <th className="py-3 px-4 text-right">Montant</th>
-            <th className="py-3 px-4 text-center">Statut</th>
+            <th className="py-3 px-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Date</th>
+            <th className="py-3 px-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Description</th>
+            <th className="py-3 px-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Compte source</th>
+            <th className="py-3 px-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Compte destinataire</th>
+            <th className="py-3 px-4 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">Montant</th>
+            <th className="py-3 px-4 text-center text-xs font-medium text-gray-300 uppercase tracking-wider">Statut</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-200">
+        <tbody className="divide-y divide-gray-700">
           {transactions.map(transaction => (
-            <tr key={transaction.id} className="hover:bg-gray-50">
-              <td className="py-2 px-4">
+            <tr key={transaction.id} className="hover:bg-gray-700 transition-colors">
+              <td className="py-2 px-4 text-gray-300">
                 {format(new Date(transaction.created_at), 'dd/MM/yyyy HH:mm', { locale: fr })}
               </td>
-              <td className="py-2 px-4">{transaction.description}</td>
-              <td className="py-2 px-4">{transaction.fromAccount?.account_number}</td>
-              <td className="py-2 px-4">{transaction.toAccount?.account_number}</td>
-              <td className="py-2 px-4 text-right">
+              <td className="py-2 px-4 text-gray-300">{transaction.description}</td>
+              <td className="py-2 px-4 text-gray-300">{transaction.fromAccount?.account_number}</td>
+              <td className="py-2 px-4 text-gray-300">{transaction.toAccount?.account_number}</td>
+              <td className="py-2 px-4 text-right text-gray-300">
                 {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(transaction.amount)}
               </td>
               <td className="py-2 px-4 text-center">
                 <span className={`inline-block px-2 py-1 text-xs rounded-full ${
-                  transaction.status === 'completed' ? 'bg-green-100 text-green-800' :
-                  transaction.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                  'bg-red-100 text-red-800'
+                  transaction.status === 'completed' ? 'bg-green-900 text-green-300' :
+                  transaction.status === 'pending' ? 'bg-yellow-900 text-yellow-300' :
+                  'bg-red-900 text-red-300'
                 }`}>
                   {transaction.status === 'completed' ? 'Terminé' :
                    transaction.status === 'pending' ? 'En attente' : 'Annulé'}
