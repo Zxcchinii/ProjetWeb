@@ -35,7 +35,8 @@ export default function LoginPage() {
         setError('Échec de la connexion');
       }
     } catch (err) {
-      setError('Identifiants invalides');
+      // Display the server's error message instead of a generic one
+      setError(err.response?.data?.error || 'Identifiants invalides');
     }
   };
 
