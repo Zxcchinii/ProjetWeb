@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import transactionService from '@/services/transactionService';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import format from 'date-fns/format';
+import fr from 'date-fns/locale/fr';
 
 export default function TransactionsList() {
   const [transactions, setTransactions] = useState([]);

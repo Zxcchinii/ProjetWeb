@@ -115,6 +115,17 @@ export default function Sidebar() {
                 Tous les comptes
               </Link>
             </li>
+            <li>
+              <Link 
+                href="/admin/transactions" 
+                className={`block p-2 rounded ${
+                  isActive('/admin/transactions') ? 
+                    'bg-blue-700 text-white' 
+                  : 'text-gray-300 hover:bg-gray-800'}`}
+              >
+                Gestion des transactions
+              </Link>
+            </li>
           </>
         )}
         

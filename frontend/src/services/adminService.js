@@ -42,7 +42,30 @@ const adminService = {
   deleteAccount: async (accountId) => {
     const response = await api.delete(`/admin/accounts/${accountId}`);
     return response.data;
-  }
+  },
+
+  // Transaction management
+  getTransactions: async () => {
+    const response = await api.get('/admin/transactions');
+    return response.data;
+  },
+
+  cancelTransaction: async (transactionId) => {
+    const response = await api.post(`/admin/transactions/${transactionId}/cancel`);
+    return response.data;
+  },
+
+  deleteUser: async (userId) => {
+    const response = await api.delete(`/admin/users/${userId}`);
+    return response.data;
+  },
+
+promoteToAdmin: async (userId) => {
+    const response = await api.put(`/admin/users/${userId}/promote`, {
+        role: 'admin'
+    });
+    return response.data;
+},
 };
 
 export default adminService;
