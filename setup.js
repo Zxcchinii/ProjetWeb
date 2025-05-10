@@ -84,7 +84,8 @@ function getMainSetupScript() {
   
   // PostgreSQL setup (rest of your original setup.js code)
   async function setupPostgres() {
-    // Le reste du code de configuration PostgreSQL...
+    console.log(chalk.blue('🐘 Configuration de PostgreSQL...'));
+    
     const dbConfig = {
       host: 'localhost',
       port: 5432,
@@ -92,8 +93,66 @@ function getMainSetupScript() {
       username: 'postgres',
       password: 'postgres'
     };
-  
-    // ... [Le reste de votre fonction setupPostgres]
+    
+    // Vérifier si PostgreSQL est installé et en cours d'exécution
+    try {
+      if (isWindows) {
+        console.log(chalk.yellow('Vérification du service PostgreSQL...'));
+        execSync('sc query postgresql-x64-14', { stdio: 'ignore' });
+      } else if (isMac) {
+        console.log(chalk.yellow('Vérification de PostgreSQL sur macOS...'));
+        execSync('brew services list | grep postgresql', { stdio: 'ignore' });
+      } else if (isLinux) {
+        console.log(chalk.yellow('Vérification de PostgreSQL sur Linux...'));
+        execSync('service postgresql status', { stdio: 'ignore' });
+      }
+    } catch (error) {
+      console.error(chalk.red('PostgreSQL ne semble pas être installé ou en cours d\'exécution.'));
+      console.log(chalk.yellow('Veuillez installer PostgreSQL et le démarrer avant de continuer.'));
+      return;
+    }
+    
+    // Créer la base de données
+    console.log(chalk.blue('Création de la base de données...'));
+    try {
+      execSync(\`psql -U \${dbConfig.username} -c "CREATE DATABASE \${dbConfig.database}"\`, { stdio: 'ignore' });
+    } catch (error) {
+      console.log(chalk.yellow('La base de données existe peut-être déjà, tentative de connexion...'));
+    }
+    
+    // Créer les tables et le schéma
+    console.log(chalk.blue('Création des tables...'));
+    const schemaSQL = \`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        email VARCHAR(255) NOT NULL UNIQUE,
+        password_hash VARCHAR(255) NOT NULL,
+        first_name VARCHAR(100) NOT NULL,
+        last_name VARCHAR(100) NOT NULL,
+        role VARCHAR(50) DEFAULT 'client',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      
+      CREATE TABLE IF NOT EXISTS accounts (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id),
+        account_number VARCHAR(30) NOT NULL UNIQUE,
+        type VARCHAR(50) NOT NULL,
+        balance DECIMAL(15, 2) DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      
+      -- Autres tables nécessaires
+    \`;
+    
+    try {
+      fs.writeFileSync('schema.sql', schemaSQL);
+      execSync(\`psql -U \${dbConfig.username} -d \${dbConfig.database} -f schema.sql\`, { stdio: 'inherit' });
+    } catch (error) {
+      console.error(chalk.red('Erreur lors de la création du schéma de la base de données.'), error);
+    }
   }
   
   // Run PostgreSQL setup
