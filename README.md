@@ -26,6 +26,6 @@ git clone https://github.com/Zxcchinii/ProjetWeb.git
 cd ProjetWeb
 
 # Start with Docker Compose
-docker-compose up -d
+docker compose up -d
 
 # Access the application at http://localhost:3000
