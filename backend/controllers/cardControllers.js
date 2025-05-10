@@ -1,170 +1,176 @@
-const bcrypt = require('bcrypt');
-const sequelize = require('../config/db');
-const Card = require('../models/Accounts/Card');
-const Account = require('../models/Accounts/Account');
+const bcrypt = require('bcrypt');           // Importation de bcrypt pour le chiffrage des codes PIN
+const sequelize = require('../config/db');  // Connexion à la base de données
+const Card = require('../models/Accounts/Card');     // Modèle Carte bancaire
+const Account = require('../models/Accounts/Account'); // Modèle Compte bancaire
 
-const SALT_ROUNDS = 10;
+const SALT_ROUNDS = 10;  // Niveau de sécurité pour le hachage des codes PIN
 
 // GET /api/cards
-// Enhanced getUserCards with more debugging
+// Récupère toutes les cartes bancaires de l'utilisateur connecté
 exports.getUserCards = async (req, res) => {
   try {
     const userId = parseInt(req.userId, 10);
     
-    console.log(`Fetching cards for user: ${userId}`);
-    console.log('Auth token present:', !!req.headers.authorization);
+    console.log(`Récupération des cartes pour l'utilisateur: ${userId}`);
+    console.log('Token d\'authentification présent:', !!req.headers.authorization);
     
     if (!userId) {
-      console.error('No userId provided in request');
+      console.error('Aucun ID utilisateur fourni dans la requête');
       return res.status(401).json({ error: 'Authentication required' });
     }
     
-    // Log the Card model to ensure it's properly loaded
-    console.log('Card model loaded:', !!Card);
+    // Vérification que le modèle Card est bien chargé
+    console.log('Modèle Card chargé:', !!Card);
     
     try {
-      // Try with more explicit error handling
+      // Comptage des cartes avec gestion d'erreur explicite
       const cardCount = await Card.count({
         where: { user_id: userId }
       });
-      console.log(`Database has ${cardCount} cards for user ${userId}`);
+      console.log(`La base de données contient ${cardCount} cartes pour l'utilisateur ${userId}`);
       
-      // Try both naming conventions to see which works
+      // Essai des deux conventions de nommage pour voir laquelle fonctionne
       let cards;
       try {
         cards = await Card.findAll({
           where: { user_id: userId },
-          attributes: { exclude: ['pin_hash'] },
-          order: [['created_at', 'DESC']]  // Try snake_case first
+          attributes: { exclude: ['pin_hash'] },  // Exclusion du hash du PIN pour la sécurité
+          order: [['created_at', 'DESC']]  // Essai avec snake_case d'abord
         });
       } catch (innerErr) {
-        console.log('Error with snake_case ordering, trying camelCase:', innerErr.message);
+        console.log('Erreur avec l\'ordre snake_case, essai avec camelCase:', innerErr.message);
         cards = await Card.findAll({
           where: { user_id: userId },
           attributes: { exclude: ['pin_hash'] },
-          order: [['createdAt', 'DESC']]  // Try camelCase second
+          order: [['createdAt', 'DESC']]  // Essai avec camelCase ensuite
         });
       }
       
-      console.log(`Found ${cards.length} cards for user ${userId}`);
+      console.log(`Trouvé ${cards.length} cartes pour l'utilisateur ${userId}`);
       if (cards.length > 0) {
-        console.log('First card details:', JSON.stringify(cards[0]));
+        console.log('Détails de la première carte:', JSON.stringify(cards[0]));
       }
       
-      res.json(cards);
+      res.json(cards);  // Renvoie les cartes au format JSON
     } catch (dbErr) {
-      console.error('Database operation error:', dbErr.message, dbErr.stack);
-      throw dbErr; // Rethrow to be caught by outer try-catch
+      console.error('Erreur d\'opération de base de données:', dbErr.message, dbErr.stack);
+      throw dbErr; // Relance l'erreur pour être capturée par le try-catch externe
     }
   } catch (err) {
-    console.error('getUserCards error:', err.message, err.stack);
+    console.error('Erreur getUserCards:', err.message, err.stack);
     res.status(500).json({ error: 'Impossible de récupérer les cartes' });
   }
 }
 
 // POST /api/cards
+// Création d'une nouvelle carte bancaire
 exports.createCard = async (req, res) => {
-  const t = await sequelize.transaction();
+  const t = await sequelize.transaction();  // Démarrage d'une transaction
   try {
     const userId = parseInt(req.userId, 10);
     const { account_id, card_type, pin } = req.body;
     
-    // Validate inputs
+    // Validation des données d'entrée
     if (!account_id || !card_type || !pin) {
       return res.status(400).json({ error: 'Données incomplètes' });
     }
     
-    // Check if pin is 4 digits
+    // Vérification que le PIN contient 4 chiffres
     if (!/^\d{4}$/.test(pin)) {
       return res.status(400).json({ error: 'Le code PIN doit contenir 4 chiffres' });
     }
 
+    // Vérification du type de carte
     const validCardTypes = ['visa', 'mastercard', 'amex'];
     if (!validCardTypes.includes(card_type.toLowerCase())) {
       return res.status(400).json({ error: 'Type de carte invalide' });
     }
     
-    // Verify account belongs to user
+    // Vérification que le compte appartient à l'utilisateur
     const account = await Account.findOne({ 
       where: { id: account_id, user_id: userId },
       transaction: t
     });
     
     if (!account) {
-      await t.rollback();
+      await t.rollback();  // Annulation de la transaction
       return res.status(404).json({ error: 'Compte introuvable' });
     }
     
-    // Generate card details
-    const cardNumber = generateCardNumber(card_type);
+    // Génération des détails de la carte
+    const cardNumber = generateCardNumber(card_type);  // Génération du numéro de carte
     const expirationDate = new Date();
-    // Set to last day of the month, 3 years from now
+    // Configuration de la date d'expiration au dernier jour du mois, dans 3 ans
     expirationDate.setFullYear(expirationDate.getFullYear() + 3);
-    expirationDate.setDate(1); // First day of month
-    expirationDate.setMonth(expirationDate.getMonth() + 1); // Move to first day of next month
-    expirationDate.setDate(0); // Back to last day of current month
-    expirationDate.setHours(23, 59, 59, 999); // End of day
-    const cvv = generateCVV();
+    expirationDate.setDate(1);  // Premier jour du mois
+    expirationDate.setMonth(expirationDate.getMonth() + 1);  // Premier jour du mois suivant
+    expirationDate.setDate(0);  // Retour au dernier jour du mois actuel
+    expirationDate.setHours(23, 59, 59, 999);  // Fin de journée
+    const cvv = generateCVV();  // Génération du code CVV
     
-    // Hash the PIN
+    // Hachage du code PIN
     const pin_hash = await bcrypt.hash(pin, SALT_ROUNDS);
     
-    // Create the card
+    // Création de la carte en base de données
     const newCard = await Card.create({
       card_number: cardNumber,
       expiration_date: expirationDate,
       cvv,
       pin_hash,
       card_type,
-      status: 'inactive',
-      daily_limit: 500.00,
+      status: 'inactive',  // Statut initial inactif
+      daily_limit: 500.00, // Limite quotidienne par défaut
       account_id,
       user_id: userId,
     }, { transaction: t });
 
-    // Add debug logging to check the actual created object
-    console.log('Created card object:', JSON.stringify(newCard));
+    // Journalisation pour débogage
+    console.log('Objet carte créé:', JSON.stringify(newCard));
 
-    // Check if user_id and account_id were properly set
+    // Vérification que l'user_id et l'account_id ont été correctement définis
     if (newCard.user_id !== userId || newCard.account_id !== account_id) {
-      console.error('Card association error - expected values:', { user_id: userId, account_id });
-      console.error('Card actual values:', { user_id: newCard.user_id, account_id: newCard.account_id });
-      // Force update if needed
+      console.error('Erreur d\'association de carte - valeurs attendues:', { user_id: userId, account_id });
+      console.error('Valeurs réelles de la carte:', { user_id: newCard.user_id, account_id: newCard.account_id });
+      // Mise à jour forcée si nécessaire
       await newCard.update({ user_id: userId, account_id }, { transaction: t });
     }
     
-    console.log('Card created successfully, committing transaction...');
-    // Commit the transaction
+    console.log('Carte créée avec succès, validation de la transaction...');
+    // Validation de la transaction
     await t.commit();
-    console.log('Transaction committed successfully');
+    console.log('Transaction validée avec succès');
     
-    // Return the card without sensitive data
+    // Suppression des données sensibles avant renvoi
     const cardResponse = newCard.toJSON();
     delete cardResponse.pin_hash;
     
-    console.log('Returning new card:', JSON.stringify(cardResponse));
+    console.log('Renvoi de la nouvelle carte:', JSON.stringify(cardResponse));
     res.status(201).json(cardResponse);
   } catch (err) {
-    console.error("Card creation error:", err);
-    console.log('Rolling back transaction due to error');
-    await t.rollback();
+    console.error("Erreur de création de carte:", err);
+    console.log('Annulation de la transaction suite à une erreur');
+    await t.rollback();  // Annulation de la transaction en cas d'erreur
     res.status(500).json({ error: 'Impossible de créer la carte' });
   }
 };
 
 // PATCH /api/cards/:id/status
+// Mise à jour du statut d'une carte (actif, inactif, bloqué)
 exports.updateCardStatus = async (req, res) => {
   try {
     const userId = parseInt(req.userId, 10)
     const { id } = req.params;
     const { status } = req.body;
+    // Vérification que le statut est valide
     if (!['active','inactive','blocked'].includes(status)) {
       return res.status(400).json({ error: 'Statut invalide' });
     }
+    // Recherche et vérification que la carte appartient à l'utilisateur
     const card = await Card.findByPk(id);
     if (!card || card.user_id!==userId) {
       return res.status(404).json({ error: 'Carte introuvable' });
     }
+    // Mise à jour du statut
     card.status = status;
     await card.save();
     res.json(card);
@@ -175,18 +181,22 @@ exports.updateCardStatus = async (req, res) => {
 }
 
 // PATCH /api/cards/:id/limit
+// Mise à jour de la limite quotidienne de dépense d'une carte
 exports.updateCardLimit = async (req, res) => {
   try {
     const userId = parseInt(req.userId, 10)
     const { id } = req.params;
     const limit = parseFloat(req.body.daily_limit);
+    // Validation que la limite est un nombre positif
     if (isNaN(limit)||limit<0) {
       return res.status(400).json({ error: 'Plafond invalide' });
     }
+    // Recherche et vérification que la carte appartient à l'utilisateur
     const card = await Card.findByPk(id);
     if (!card||card.user_id!==userId) {
       return res.status(404).json({ error: 'Carte introuvable' });
     }
+    // Mise à jour de la limite
     card.daily_limit = limit;
     await card.save();
     res.json(card);
@@ -196,10 +206,11 @@ exports.updateCardLimit = async (req, res) => {
   }
 }
 
-// Add this method to handle card deletion
+// DELETE /api/cards/:id
+// Suppression d'une carte bancaire
 exports.deleteCard = async (req, res) => {
   try {
-    const t = await sequelize.transaction();
+    const t = await sequelize.transaction();  // Démarrage d'une transaction
     const userId = parseInt(req.userId, 10);
     const cardId = parseInt(req.params.id, 10);
     
@@ -208,7 +219,7 @@ exports.deleteCard = async (req, res) => {
       return res.status(400).json({ error: 'ID de carte invalide' });
     }
     
-    // Check if the card belongs to the user
+    // Vérification que la carte appartient bien à l'utilisateur
     const card = await Card.findOne({
       where: { 
         id: cardId,
@@ -222,16 +233,16 @@ exports.deleteCard = async (req, res) => {
       return res.status(404).json({ error: 'Carte introuvable' });
     }
     
-    // Delete the card
+    // Suppression de la carte
     await card.destroy({ transaction: t });
     
-    await t.commit();
+    await t.commit();  // Validation de la transaction
     return res.status(200).json({ 
       success: true, 
       message: 'Carte supprimée avec succès' 
     });
   } catch (err) {
-    await t.rollback();
+    await t.rollback();  // Annulation en cas d'erreur
     return res.status(500).json({
       success: false,
       error: 'Impossible de supprimer la carte',
@@ -241,23 +252,24 @@ exports.deleteCard = async (req, res) => {
 };
 
 
-// Helper functions
+// Fonctions utilitaires
+// Génère un numéro de carte valide selon l'algorithme de Luhn
 function generateCardNumber(type) {
-  // Generate different prefixes based on card type
+  // Génération des préfixes en fonction du type de carte
   let prefix;
   let length;
   
   switch (type.toLowerCase()) {
     case 'visa':
-      prefix = '4';
+      prefix = '4';  // Les cartes Visa commencent par 4
       length = 16;
       break;
     case 'mastercard':
-      prefix = '5' + (Math.floor(Math.random() * 5) + 1); // 51-55
+      prefix = '5' + (Math.floor(Math.random() * 5) + 1);  // MasterCard: 51-55
       length = 16;
       break;
     case 'amex':
-      prefix = '3' + (Math.floor(Math.random() * 2) + 4); // 34 or 37
+      prefix = '3' + (Math.floor(Math.random() * 2) + 4);  // AmEx: 34 ou 37
       length = 15;
       break;
     default:
@@ -265,13 +277,13 @@ function generateCardNumber(type) {
       length = 16;
   }
   
-  // Generate remaining random digits
+  // Génération des chiffres restants aléatoires
   let number = prefix;
   for (let i = 0; i < length - prefix.length - 1; i++) {
     number += Math.floor(Math.random() * 10);
   }
   
-  // Implement Luhn algorithm for checksum
+  // Implémentation de l'algorithme de Luhn pour le chiffre de vérification
   const digits = number.split('').map(d => parseInt(d));
   let sum = 0;
   let alternate = false;
@@ -288,11 +300,12 @@ function generateCardNumber(type) {
     alternate = !alternate;
   }
   
-  // Calculate check digit
+  // Calcul du chiffre de vérification
   const checkDigit = (10 - (sum % 10)) % 10;
   return number + checkDigit;
 }
 
+// Génère un code CVV aléatoire à 3 chiffres
 function generateCVV() {
-  return String(Math.floor(Math.random() * 900) + 100); // 3-digit number between 100-999
+  return String(Math.floor(Math.random() * 900) + 100);  // Nombre à 3 chiffres entre 100 et 999
 }
