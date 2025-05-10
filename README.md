@@ -18,14 +18,14 @@ A full-stack banking application with Next.js frontend and Express.js backend wi
 
 ## 🚀 Quick Start
 
-- **First install postgre** : https://www.postgresql.org/download/
- 
-### One-Command Setup
+### Option 1: Using Docker (Recommended)
 
 ```bash
 # Clone the repository
 git clone https://github.com/Zxcchinii/ProjetWeb.git
 cd ProjetWeb
 
-# Run the setup script
-node setup.js
+# Start with Docker Compose
+docker-compose up -d
+
+# Access the application at http://localhost:3000
