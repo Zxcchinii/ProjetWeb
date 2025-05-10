@@ -18,6 +18,8 @@ A full-stack banking application with Next.js frontend and Express.js backend wi
 
 ## 🚀 Quick Start
 
+- **First install postgre** : https://www.postgresql.org/download/
+ 
 ### One-Command Setup
 
 ```bash
